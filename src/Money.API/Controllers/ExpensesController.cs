@@ -33,4 +33,17 @@ public class ExpensesController : ControllerBase
 
         return CreatedAtAction(nameof(GetAll), new { id = expense.Id }, expense);
     }
+
+    [HttpGet("{id}")]
+    public async Task<ActionResult<Expense>> GetExpenseById(Guid id)
+    {
+        var expense = await _context.Expenses.FindAsync(id);
+
+        if (expense == null)
+            return NotFound();
+
+        return Ok(expense);
+    }
+
+
 }
