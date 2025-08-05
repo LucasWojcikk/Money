@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 
 namespace Money.Domain.Entities
 {
-    internal class Expense
+    public class Expense
     {
         public Guid Id { get; set; } = Guid.NewGuid();
 
