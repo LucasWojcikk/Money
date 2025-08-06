@@ -1,11 +1,17 @@
-﻿using Money.Domain.Entities;
+﻿using Money.Application.DTOs.Expenses;
+using Money.Domain.Entities;
 
 namespace Money.Application.Interfaces
 {
     public interface IExpenseRepository
     {
-        Task<IEnumerable<Expense>> GetAllAsync();
-        Task<Expense?> GetByIdAsync(Guid id);
-        Task AddAsync(Expense expense);
+        // Já existentes:
+        Task<IEnumerable<Expense>> GetByUserAsync(Guid userId);
+        Task<Expense> CreateAsync(CreateExpenseDto dto, Guid userId);
+
+        // Novos:
+        Task<Expense?> GetByIdAsync(Guid id, Guid userId);
+        Task UpdateAsync(Guid id, UpdateExpenseDto dto, Guid userId);
+        Task DeleteAsync(Guid id, Guid userId);
     }
 }

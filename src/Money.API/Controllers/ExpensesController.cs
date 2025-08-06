@@ -1,49 +1,57 @@
-﻿using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
+﻿using System.Security.Claims;
+using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
+using Money.Application.DTOs.Expenses;
+using Money.Application.Interfaces;
 using Money.Domain.Entities;
-using Money.Infrastructure.Data;
 
 namespace Money.API.Controllers;
 
 [ApiController]
 [Route("api/[controller]")]
+[Authorize]
 public class ExpensesController : ControllerBase
 {
-    private readonly MoneyDbContext _context;
+    private readonly IExpenseRepository _repo;
+    public ExpensesController(IExpenseRepository repo) => _repo = repo;
 
-    public ExpensesController(MoneyDbContext context)
-    {
-        _context = context;
-    }
-
-    // GET: /api/expenses
     [HttpGet]
     public async Task<ActionResult<IEnumerable<Expense>>> GetAll()
     {
-        var expenses = await _context.Expenses.ToListAsync();
+        var userId = Guid.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier)!);
+        var expenses = await _repo.GetByUserAsync(userId);
         return Ok(expenses);
     }
 
-    // POST: /api/expenses
-    [HttpPost]
-    public async Task<ActionResult<Expense>> Create([FromBody] Expense expense)
-    {
-        _context.Expenses.Add(expense);
-        await _context.SaveChangesAsync();
-
-        return CreatedAtAction(nameof(GetAll), new { id = expense.Id }, expense);
-    }
-
     [HttpGet("{id}")]
-    public async Task<ActionResult<Expense>> GetExpenseById(Guid id)
+    public async Task<ActionResult<Expense>> GetById(Guid id)
     {
-        var expense = await _context.Expenses.FindAsync(id);
-
-        if (expense == null)
-            return NotFound();
-
-        return Ok(expense);
+        var userId = Guid.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier)!);
+        var expense = await _repo.GetByIdAsync(id, userId);
+        return expense is null ? NotFound() : Ok(expense);
     }
 
+    [HttpPost]
+    public async Task<ActionResult<Expense>> Create([FromBody] CreateExpenseDto dto)
+    {
+        var userId = Guid.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier)!);
+        var expense = await _repo.CreateAsync(dto, userId);
+        return CreatedAtAction(nameof(GetById), new { id = expense.Id }, expense);
+    }
 
+    [HttpPut("{id}")]
+    public async Task<IActionResult> Update(Guid id, [FromBody] UpdateExpenseDto dto)
+    {
+        var userId = Guid.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier)!);
+        await _repo.UpdateAsync(id, dto, userId);
+        return NoContent();
+    }
+
+    [HttpDelete("{id}")]
+    public async Task<IActionResult> Delete(Guid id)
+    {
+        var userId = Guid.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier)!);
+        await _repo.DeleteAsync(id, userId);
+        return NoContent();
+    }
 }
