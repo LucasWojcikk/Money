@@ -9,6 +9,11 @@ using Money.Infrastructure.Services;
 
 var builder = WebApplication.CreateBuilder(args);
 
+// **==============================**
+// Registra os serviços do MVC (controllers)
+// **==============================**
+builder.Services.AddControllers();
+
 // 1) Configurações do JWT
 var jwtSettings = builder.Configuration.GetSection("Jwt");
 
@@ -43,11 +48,13 @@ builder.Services
         };
     });
 
+// 4.1) Registra as políticas de autorização
+builder.Services.AddAuthorization();
+
 // 5) (Re)gera documentação Swagger / OpenAPI
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen(c =>
 {
-    // Opcional: suporta o botão “Authorize” no Swagger UI
     c.AddSecurityDefinition("Bearer", new Microsoft.OpenApi.Models.OpenApiSecurityScheme
     {
         Name = "Authorization",
@@ -82,6 +89,9 @@ if (app.Environment.IsDevelopment())
     app.UseSwaggerUI();
 }
 
+app.UseDefaultFiles();
+app.UseStaticFiles();
+
 app.UseHttpsRedirection();
 
 // **Autenticação primeiro** (decodifica e popula User.Claims)
@@ -90,6 +100,7 @@ app.UseAuthentication();
 // **Depois autorização** (verifica [Authorize])
 app.UseAuthorization();
 
+// Mapeia os controllers (é aqui que AddControllers entra em ação)
 app.MapControllers();
 
 app.Run();
