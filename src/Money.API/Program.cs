@@ -14,6 +14,18 @@ var builder = WebApplication.CreateBuilder(args);
 // **==============================**
 builder.Services.AddControllers();
 
+// **ADICIONE ESTA CONFIGURAÇÃO DE CORS**
+builder.Services.AddCors(options =>
+{
+    options.AddPolicy("AllowReactApp", policy =>
+    {
+        policy.WithOrigins("http://localhost:5173") // URL do Vite
+              .AllowAnyHeader()
+              .AllowAnyMethod()
+              .AllowCredentials();
+    });
+});
+
 // 1) Configurações do JWT
 var jwtSettings = builder.Configuration.GetSection("Jwt");
 
@@ -91,8 +103,10 @@ if (app.Environment.IsDevelopment())
 
 app.UseDefaultFiles();
 app.UseStaticFiles();
-
 app.UseHttpsRedirection();
+
+// **ADICIONE O CORS AQUI - ANTES DA AUTENTICAÇÃO**
+app.UseCors("AllowReactApp");
 
 // **Autenticação primeiro** (decodifica e popula User.Claims)
 app.UseAuthentication();
